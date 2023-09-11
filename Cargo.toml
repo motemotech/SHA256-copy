@@ -1,0 +1,39 @@
+[package]
+name = "halo2-dynamic-sha256"
+version = "0.1.0"
+edition = "2018"
+authors = ["Sora Suegami"]
+description = "SHA256 verification circuit in halo2 supporting dynamic length input."
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+# halo2wrong = { git = "https://github.com/privacy-scaling-explorations/halo2wrong", tag = "v2023_02_02" }
+# maingate = { git = "https://github.com/privacy-scaling-explorations/halo2wrong", tag = "v2023_02_02" }
+halo2-base = { version = "0.2.2", default-features = false, features = [
+    "halo2-pse",
+    "display",
+], git = "https://github.com/axiom-crypto/halo2-lib.git", rev = "9860acc" }
+halo2-ecc = { version = "0.2.2", default-features = false, features = [
+    "halo2-pse",
+    "display",
+], git = "https://github.com/axiom-crypto/halo2-lib.git", rev = "9860acc" }
+# zkevm-circuits = { git = "https://github.com/SoraSuegami/zkevm-circuits.git", branch = "feat/simple_compression" }
+# halo2_proofs = { git = "https://github.com/privacy-scaling-explorations/halo2.git", tag = "v2022_10_22" }
+# eth-types = { git = "https://github.com/SoraSuegami/zkevm-circuits.git", branch = "feat/simple_compression" }
+log = "0.4"
+generic-array = { version = "0.14.6", features = ["more_lengths"] }
+
+# rand_xorshift = "0.3"
+rand = "0.8"
+num-bigint = { version = "0.4", features = ["rand"] }
+sha2 = { version = "0.10.6", features = ["compress"] }
+hex = "0.4.3"
+itertools = "0.10.3"
+
+[dev-dependencies]
+criterion = "0.4.0"
+
+[[bench]]
+name = "digest"
+harness = false
