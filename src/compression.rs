@@ -453,8 +453,13 @@ fn maj<'a, 'b: 'a, F: PrimeField>(
             QuantumCell::Existing(&odd_spread),
             QuantumCell::Existing(&even_spread),
         );
-
+        gate.assert_equal(
+            ctx,
+            QuantumCell::Existing(&sum),
+            QuantumCell::Existing(&m_hi),
+        )
     }
+    // compose m_hi and m_lo into the same m
     let m = gate.mul_add(
         ctx,
         QuantumCell::Existing(&m_hi_odd),
@@ -464,6 +469,7 @@ fn maj<'a, 'b: 'a, F: PrimeField>(
     Ok(m)
 }
 
+// return x + y + z
 fn three_add<'a, 'b: 'a, F: PrimeField>(
     ctx: &mut Context<'b, F>,
     gate: &FlexGateConfig<F>,
@@ -475,6 +481,7 @@ fn three_add<'a, 'b: 'a, F: PrimeField>(
     gate.add(ctx, QuantumCell::Existing(&add1), z)
 }
 
+// 
 fn sigma_upper0<'a, 'b: 'a, F: PrimeField>(
     ctx: &mut Context<'b, F>,
     range: &RangeConfig<F>,
@@ -484,12 +491,14 @@ fn sigma_upper0<'a, 'b: 'a, F: PrimeField>(
     const STARTS: [usize; 4] = [0, 2, 13, 22];
     const ENDS: [usize; 4] = [2, 13, 22, 32];
     const PADDINGS: [usize; 4] = [6, 5, 7, 6];
+    // What is this coeffs?
     let coeffs = [
         F::from((1u64 << 60) + (1u64 << 38) + (1u64 << 20)),
         F::from((1u64 << 0) + (1u64 << 42) + (1u64 << 24)),
         F::from((1u64 << 22) + (1u64 << 0) + (1u64 << 46)),
         F::from((1u64 << 40) + (1u64 << 18) + (1u64 << 0)),
     ];
+    // 
     sigma_generic(
         ctx,
         range,
@@ -594,7 +603,6 @@ fn sigma_generic<'a, 'b: 'a, F: PrimeField>(
     coeffs: &[F; 4],
 ) -> Result<AssignedValue<'a, F>, Error> {
     let gate = range.gate();
-    // let x_spread = spread_config.spread(ctx, range, x)?;
     let bits_val = x_spread.0.value().zip(x_spread.1.value()).map(|(lo, hi)| {
         let mut bits = fe_to_bits_le(lo, 32);
         bits.append(&mut fe_to_bits_le(hi, 32));
@@ -608,8 +616,6 @@ fn sigma_generic<'a, 'b: 'a, F: PrimeField>(
                 bits_le_to_fe(&bits)
             });
             let assigned = gate.load_witness(ctx, fe_val);
-            // let assigned_spread = spread_config.spread(ctx, range, &assigned_dense)?;
-            // let result: Result<AssignedValue<F>, Error> = Ok(assigned_spread);
             assigned
         };
     let assigned_a = assign_bits(&bits_val, starts[0], ends[0], paddings[0]);
@@ -648,24 +654,8 @@ fn sigma_generic<'a, 'b: 'a, F: PrimeField>(
             QuantumCell::Existing(&sum),
         );
     };
-    // println!(
-    //     "x {:?}, a {:?}, b {:?}, c {:?}, d {:?}",
-    //     x.value(),
-    //     assigned_a,
-    //     assigned_b,
-    //     assigned_c,
-    //     assigned_d
-    // );
     let r_spread = {
-        // let a_coeff = F::from(1u64 << 60 + 1u64 << 38 + 1u64 << 20);
-        // let b_coeff = F::from(1u64 << 0 + 1u64 << 42 + 1u64 << 24);
-        // let c_coeff = F::from(1u64 << 22 + 1u64 << 0 + 1u64 << 46);
-        // let d_coeff = F::from(1u64 << 40 + 1u64 << 18 + 1u64 << 0);
         let mut sum = gate.load_zero(ctx);
-        // let assigned_a_spread = spread_config.spread(ctx, range, &assigned_a)?;
-        // let assigned_b_spread = spread_config.spread(ctx, range, &assigned_b)?;
-        // let assigned_c_spread = spread_config.spread(ctx, range, &assigned_c)?;
-        // let assigned_d_spread = spread_config.spread(ctx, range, &assigned_d)?;
         sum = gate.mul_add(
             ctx,
             QuantumCell::Constant(coeffs[0]),
@@ -718,21 +708,10 @@ fn sigma_generic<'a, 'b: 'a, F: PrimeField>(
         );
         (assigned_lo, assigned_hi)
     };
-    // println!(
-    //     "r_spread {:?}, r_lo {:?}, r_hi {:?}",
-    //     r_spread.value(),
-    //     r_lo.value(),
-    //     r_hi.value()
-    // );
     let (r_lo_even, r_lo_odd) =
         spread_config.decompose_even_and_odd_unchecked(ctx, range, &r_lo)?;
     let (r_hi_even, r_hi_odd) =
         spread_config.decompose_even_and_odd_unchecked(ctx, range, &r_hi)?;
-    // println!(
-    //     "r_hi_even {:?}, r_lo_even {:?}",
-    //     r_hi_even.value(),
-    //     r_lo_even.value()
-    // );
     {
         let even_spread = spread_config.spread(ctx, range, &r_lo_even)?;
         let odd_spread = spread_config.spread(ctx, range, &r_lo_odd)?;
@@ -769,7 +748,6 @@ fn sigma_generic<'a, 'b: 'a, F: PrimeField>(
         QuantumCell::Constant(F::from(1 << 16)),
         QuantumCell::Existing(&r_lo_even),
     );
-    // println!("r {:?}", r.value());
     Ok(r)
 }
 
